@@ -189,6 +189,18 @@ Flickable {
                     if (userMod.color)
                         merged.color = userMod.color;
 
+                    if (userMod.iconColorSource !== undefined)
+                        merged.iconColorSource = userMod.iconColorSource;
+
+                    if (userMod.iconColor)
+                        merged.iconColor = userMod.iconColor;
+
+                    if (userMod.applyConditionsToText !== undefined)
+                        merged.applyConditionsToText = userMod.applyConditionsToText;
+
+                    if (userMod.applyConditionsToIcon !== undefined)
+                        merged.applyConditionsToIcon = userMod.applyConditionsToIcon;
+
                     if (userMod.displayMode !== undefined)
                         merged.displayMode = userMod.displayMode;
 
@@ -712,6 +724,9 @@ Flickable {
         property int currentDisplayMode: 0
         property int currentSpeedFormat: -1 // -1 means "Use Global"
         property int currentTempUnit: 0 // 0: Celsius, 1: Fahrenheit
+        property int currentIconColorSource: -1 // -1: Global Default, 0: Follow Text, 1: System, 2: Custom
+        property int currentApplyConditionsToText: -1 // -1: Global Default, 0: Off, 1: On
+        property int currentApplyConditionsToIcon: -1 // -1: Global Default, 0: Off, 1: On
 
         function openForEdit(moduleData) {
             addDialog.editingModuleId = moduleData.id;
@@ -728,6 +743,10 @@ Flickable {
             idField.text = initialSensorId;
             labelField.text = String(moduleData.label || "");
             colorField.text = page.normalizeColorInput(moduleData.color);
+            addDialog.currentIconColorSource = moduleData.iconColorSource !== undefined ? moduleData.iconColorSource : -1;
+            iconColorField.text = moduleData.iconColor ? String(moduleData.iconColor) : "system";
+            addDialog.currentApplyConditionsToText = moduleData.applyConditionsToText !== undefined ? moduleData.applyConditionsToText : -1;
+            addDialog.currentApplyConditionsToIcon = moduleData.applyConditionsToIcon !== undefined ? moduleData.applyConditionsToIcon : -1;
             addDialog.currentDisplayMode = moduleData.displayMode !== undefined ? moduleData.displayMode : 0;
             addDialog.currentSpeedFormat = moduleData.speedFormat !== undefined ? moduleData.speedFormat : -1;
             addDialog.currentTempUnit = moduleData.tempUnit !== undefined ? moduleData.tempUnit : 0;
@@ -791,6 +810,10 @@ Flickable {
                 "label": labelField.text.trim(),
                 "icon": addDialog.selectedIcon,
                 "color": colorField.text.trim() || "system",
+                "iconColorSource": addDialog.currentIconColorSource,
+                "iconColor": iconColorField.text.trim(),
+                "applyConditionsToText": addDialog.currentApplyConditionsToText,
+                "applyConditionsToIcon": addDialog.currentApplyConditionsToIcon,
                 "displayMode": addDialog.currentDisplayMode,
                 "speedFormat": addDialog.currentSpeedFormat,
                 "tempUnit": addDialog.currentTempUnit,
@@ -821,6 +844,10 @@ Flickable {
                 idField.text = "";
                 labelField.text = "";
                 colorField.text = "system";
+                addDialog.currentIconColorSource = -1;
+                iconColorField.text = "system";
+                addDialog.currentApplyConditionsToText = -1;
+                addDialog.currentApplyConditionsToIcon = -1;
             }
         }
 
@@ -1247,6 +1274,99 @@ Flickable {
                             }
 
                             Text {
+                                text: "ICON COLOR"
+                                color: Components.Theme.textSecondary
+                                font.pixelSize: 10
+                                font.bold: true
+                                font.letterSpacing: 1
+                                Layout.topMargin: 8
+                            }
+
+                            Flow {
+                                Layout.fillWidth: true
+                                spacing: 8
+
+                                Repeater {
+                                    model: [
+                                        { label: "Global Default", value: -1 },
+                                        { label: "Follow Text", value: 0 },
+                                        { label: "System", value: 1 },
+                                        { label: "Custom", value: 2 }
+                                    ]
+
+                                    delegate: Rectangle {
+                                        readonly property bool selected: addDialog.currentIconColorSource === modelData.value
+                                        width: iconSrcRow.implicitWidth + 16
+                                        height: 24
+                                        radius: 8
+                                        color: selected ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.05)
+                                        border.color: selected ? "white" : Qt.rgba(1, 1, 1, 0.15)
+                                        border.width: selected ? 2 : 1
+
+                                        RowLayout {
+                                            id: iconSrcRow
+                                            anchors.centerIn: parent
+                                            spacing: 6
+
+                                            Text {
+                                                text: modelData.label
+                                                color: Components.Theme.textPrimary
+                                                font.pixelSize: 11
+                                                font.bold: selected
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: addDialog.currentIconColorSource = modelData.value
+                                        }
+                                    }
+                                }
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                visible: addDialog.currentIconColorSource === 2
+                                spacing: 12
+
+                                Components.ColorSwatch {
+                                    colorValue: page.resolveColor(iconColorField.text)
+                                    width: 36
+                                    height: 36
+                                    onClicked: {
+                                        masterColorDialog.targetObject = iconColorField;
+                                        masterColorDialog.targetProperty = "text";
+                                        masterColorDialog.targetIndex = -1;
+                                        masterColorDialog.selectedColor = page.resolveColor(iconColorField.text);
+                                        masterColorDialog.open();
+                                    }
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 36
+                                    color: iconColorField.activeFocus ? Components.Theme.activeBg : Qt.rgba(0, 0, 0, 0.1)
+                                    border.color: iconColorField.activeFocus ? Components.Theme.accentCol : Components.Theme.controlBorder
+                                    radius: 6
+
+                                    TextInput {
+                                        id: iconColorField
+                                        anchors.fill: parent
+                                        anchors.margins: 12
+                                        verticalAlignment: TextInput.AlignVCenter
+                                        color: Components.Theme.textPrimary
+                                        font.pixelSize: 12
+                                        text: "system"
+                                    }
+                                }
+
+                                Item {
+                                    Layout.fillWidth: true
+                                }
+                            }
+
+                            Text {
                                 text: "DEFAULT COLOR"
                                 color: Components.Theme.textSecondary
                                 font.pixelSize: 10
@@ -1588,6 +1708,104 @@ Flickable {
                                 font.letterSpacing: 1
                             }
 
+                            Text {
+                                text: "APPLY CONDITIONS TO"
+                                color: Components.Theme.textSecondary
+                                font.pixelSize: 10
+                                font.bold: true
+                                font.letterSpacing: 1
+                                Layout.topMargin: 4
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 20
+
+                                // Text Target
+                                RowLayout {
+                                    spacing: 8
+                                    Text {
+                                        text: "Text:"
+                                        color: Components.Theme.textPrimary
+                                        font.pixelSize: 11
+                                    }
+                                    Flow {
+                                        spacing: 6
+                                        Repeater {
+                                            model: [
+                                                { label: "Global", value: -1 },
+                                                { label: "On", value: 1 },
+                                                { label: "Off", value: 0 }
+                                            ]
+                                            delegate: Rectangle {
+                                                readonly property bool selected: addDialog.currentApplyConditionsToText === modelData.value
+                                                width: targetTextLabel.implicitWidth + 14
+                                                height: 22
+                                                radius: 6
+                                                color: selected ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.05)
+                                                border.color: selected ? "white" : Qt.rgba(1, 1, 1, 0.15)
+                                                border.width: selected ? 2 : 1
+                                                Text {
+                                                    id: targetTextLabel
+                                                    anchors.centerIn: parent
+                                                    text: modelData.label
+                                                    color: Components.Theme.textPrimary
+                                                    font.pixelSize: 11
+                                                    font.bold: selected
+                                                }
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: addDialog.currentApplyConditionsToText = modelData.value
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Icon Target
+                                RowLayout {
+                                    spacing: 8
+                                    Text {
+                                        text: "Icon:"
+                                        color: Components.Theme.textPrimary
+                                        font.pixelSize: 11
+                                    }
+                                    Flow {
+                                        spacing: 6
+                                        Repeater {
+                                            model: [
+                                                { label: "Global", value: -1 },
+                                                { label: "On", value: 1 },
+                                                { label: "Off", value: 0 }
+                                            ]
+                                            delegate: Rectangle {
+                                                readonly property bool selected: addDialog.currentApplyConditionsToIcon === modelData.value
+                                                width: targetIconLabel.implicitWidth + 14
+                                                height: 22
+                                                radius: 6
+                                                color: selected ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.05)
+                                                border.color: selected ? "white" : Qt.rgba(1, 1, 1, 0.15)
+                                                border.width: selected ? 2 : 1
+                                                Text {
+                                                    id: targetIconLabel
+                                                    anchors.centerIn: parent
+                                                    text: modelData.label
+                                                    color: Components.Theme.textPrimary
+                                                    font.pixelSize: 11
+                                                    font.bold: selected
+                                                }
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: addDialog.currentApplyConditionsToIcon = modelData.value
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
                             ColumnLayout {
                                 Layout.fillWidth: true
                                 spacing: 8
@@ -1913,9 +2131,47 @@ Flickable {
                             }
                         }
 
-                        function evaluatePreviewColor(val, baseCol, condCount, rawByteVal) {
+                        id: previewCardRect
+
+                        function isMoreSpecificPreviewCondition(curr, best) {
+                            if (!best)
+                                return true;
+                            if (curr.op === "==")
+                                return true;
+                            if (best.op === "==")
+                                return false;
+
+                            var currUpper = (curr.op === ">" || curr.op === ">=");
+                            var bestUpper = (best.op === ">" || best.op === ">=");
+                            if (currUpper && bestUpper) {
+                                if (curr.thresh !== best.thresh)
+                                    return curr.thresh > best.thresh;
+                                if (curr.op === ">" && best.op === ">=")
+                                    return true;
+                                if (curr.op === ">=" && best.op === ">")
+                                    return false;
+                                return true;
+                            }
+
+                            var currLower = (curr.op === "<" || curr.op === "<=");
+                            var bestLower = (best.op === "<" || best.op === "<=");
+                            if (currLower && bestLower) {
+                                if (curr.thresh !== best.thresh)
+                                    return curr.thresh < best.thresh;
+                                if (curr.op === "<" && best.op === "<=")
+                                    return true;
+                                if (curr.op === "<=" && best.op === "<")
+                                    return false;
+                                return true;
+                            }
+
+                            return true;
+                        }
+
+                        function evaluatePreviewConditionColor(val, condCount, rawByteVal) {
                             var numVal = parseFloat(val);
                             var byteVal = (rawByteVal !== undefined && rawByteVal !== null) ? parseFloat(rawByteVal) : NaN;
+                            var best = null;
 
                             for (var i = 0; i < condCount; i++) {
                                 var c = tempConditionsModel.get(i);
@@ -1942,11 +2198,38 @@ Flickable {
                                     matched = true;
                                 else if (c.operator === "<=" && compareVal <= thresh)
                                     matched = true;
-                                if (matched)
-                                    return c.color;
-
+                                if (matched) {
+                                    var cand = { op: c.operator, thresh: thresh, color: page.resolveColor(c.color) };
+                                    if (isMoreSpecificPreviewCondition(cand, best))
+                                        best = cand;
+                                }
                             }
-                            return baseCol;
+                            return best ? best.color : null;
+                        }
+
+                        function shouldApplyPreviewText() {
+                            if (addDialog.currentApplyConditionsToText !== -1)
+                                return addDialog.currentApplyConditionsToText === 1;
+                            return cfg.applyConditionsToText !== undefined ? cfg.applyConditionsToText : true;
+                        }
+
+                        function shouldApplyPreviewIcon() {
+                            if (addDialog.currentApplyConditionsToIcon !== -1)
+                                return addDialog.currentApplyConditionsToIcon === 1;
+                            return cfg.applyConditionsToIcon !== undefined ? cfg.applyConditionsToIcon : true;
+                        }
+
+                        function getPreviewBaseIconColor() {
+                            if (addDialog.currentIconColorSource === 0)
+                                return page.resolveColor(colorField.text);
+                            if (addDialog.currentIconColorSource === 1)
+                                return Kirigami.Theme.textColor;
+                            if (addDialog.currentIconColorSource === 2 && iconColorField.text.trim() !== "")
+                                return page.resolveColor(iconColorField.text.trim());
+                            let globalSrc = cfg.iconColorSource !== undefined ? cfg.iconColorSource : 0;
+                            if (globalSrc === 1) return Kirigami.Theme.textColor;
+                            if (globalSrc === 2) return page.resolveColor(cfg.customIconColor || "#ffffff");
+                            return page.resolveColor(colorField.text);
                         }
 
                         Layout.fillWidth: true
@@ -1992,7 +2275,7 @@ Flickable {
                                             // Percentage
                                             return page.percent(previewSensor.value || 0, ramTotal.value || 1);
                                         else
-                                            return parent.parent.formatBytes(previewSensor.value || 0, -1);
+                                            return previewCardRect.formatBytes(previewSensor.value || 0, -1);
                                     }
                                     // Swap Display Mode
                                     if (addDialog.editingModuleId === "swap") {
@@ -2000,7 +2283,7 @@ Flickable {
                                             // Percentage
                                             return page.percent(previewSensor.value || 0, swapTotal.value || 1);
                                         else
-                                            return parent.parent.formatBytes(previewSensor.value || 0, -1);
+                                            return previewCardRect.formatBytes(previewSensor.value || 0, -1);
                                     }
                                     // VRAM Display Mode
                                     if (addDialog.editingModuleId === "vram") {
@@ -2008,20 +2291,20 @@ Flickable {
                                             // Percentage
                                             return page.percent(previewSensor.value || 0, vramTotal.value || 1);
                                         else
-                                            return parent.parent.formatBytes(previewSensor.value || 0, -1);
+                                            return previewCardRect.formatBytes(previewSensor.value || 0, -1);
                                     }
                                     // Temperature Unit
                                     if (["cpu_temp", "gpu_temp"].indexOf(addDialog.editingModuleId) !== -1) {
                                         var val = previewSensor.value !== undefined ? Math.round(previewSensor.value) : 0;
                                         if (addDialog.currentTempUnit === 1)
                                             // Fahrenheit
-                                            return parent.parent.cToF(val) + "°F";
+                                            return previewCardRect.cToF(val) + "°F";
                                         else
                                             return val + "°C";
                                     }
                                     // Network Speed Format Override
                                     if (["upload", "download"].indexOf(addDialog.editingModuleId) !== -1)
-                                        return parent.parent.formatBytes(previewSensor.value || 0, addDialog.currentSpeedFormat);
+                                        return previewCardRect.formatBytes(previewSensor.value || 0, addDialog.currentSpeedFormat);
 
                                     return previewSensor.formattedValue || (previewSensor.value !== undefined ? Math.round(previewSensor.value) : "N/A");
                                 }
@@ -2038,10 +2321,33 @@ Flickable {
                                         byteVal = previewSensor.value !== undefined ? previewSensor.value : (75 * (vramTotal.value || 8000000000) / 100);
                                         rawVal = (vramTotal.value && vramTotal.value > 0) ? (byteVal / vramTotal.value * 100) : 75;
                                     }
-                                    return parent.parent.evaluatePreviewColor(rawVal, page.resolveColor(colorField.text), tempConditionsModel.count, byteVal);
+                                    var condCol = previewCardRect.evaluatePreviewConditionColor(rawVal, tempConditionsModel.count, byteVal);
+                                    if (condCol && previewCardRect.shouldApplyPreviewText())
+                                        return condCol;
+                                    return page.resolveColor(colorField.text);
                                 }
                                 fontSize: cfg.fontSize || 10
                                 fontFamily: cfg.fontFamily || ""
+                                fontWeight: cfg.fontWeight || Font.Bold
+                                fontItalic: cfg.fontItalic || false
+                                iconColor: {
+                                    var rawVal = previewSensor.value !== undefined ? previewSensor.value : 75;
+                                    var byteVal = undefined;
+                                    if (addDialog.editingModuleId === "ram") {
+                                        byteVal = previewSensor.value !== undefined ? previewSensor.value : (75 * (ramTotal.value || 16000000000) / 100);
+                                        rawVal = ramTotal.value ? (byteVal / ramTotal.value * 100) : 75;
+                                    } else if (addDialog.editingModuleId === "swap") {
+                                        byteVal = previewSensor.value !== undefined ? previewSensor.value : (75 * (swapTotal.value || 8000000000) / 100);
+                                        rawVal = swapTotal.value ? (byteVal / swapTotal.value * 100) : 75;
+                                    } else if (addDialog.editingModuleId === "vram") {
+                                        byteVal = previewSensor.value !== undefined ? previewSensor.value : (75 * (vramTotal.value || 8000000000) / 100);
+                                        rawVal = (vramTotal.value && vramTotal.value > 0) ? (byteVal / vramTotal.value * 100) : 75;
+                                    }
+                                    var condCol = previewCardRect.evaluatePreviewConditionColor(rawVal, tempConditionsModel.count, byteVal);
+                                    if (condCol && previewCardRect.shouldApplyPreviewIcon())
+                                        return condCol;
+                                    return previewCardRect.getPreviewBaseIconColor();
+                                }
                                 showIcon: true
                                 showTooltips: false
                                 // Reset to normal scale
