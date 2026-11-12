@@ -143,65 +143,61 @@ Item {
                 color: Qt.rgba(0.08, 0.08, 0.12, 1)
                 border.color: Theme.borderCol
                 border.width: 1
-                height: Math.min(popupCol.implicitHeight + 8, maxHeight)
+                height: Math.min(((comboRoot.model && comboRoot.model.length !== undefined) ? comboRoot.model.length : 0) * 32 + 8, maxHeight)
                 clip: true
                 layer.enabled: true
 
-                Flickable {
-                    id: popupFlick
+                ListView {
+                    id: popupList
 
                     anchors.fill: parent
                     anchors.margins: 4
-                    contentHeight: popupCol.implicitHeight
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
+                    model: comboRoot.model
 
-                    Column {
-                        id: popupCol
+                    Component.onCompleted: {
+                        if (comboRoot.currentIndex >= 0 && comboRoot.currentIndex < count) {
+                            positionViewAtIndex(comboRoot.currentIndex, ListView.Center);
+                        }
+                    }
 
-                        width: popupFlick.width
-                        spacing: 0
+                    delegate: Rectangle {
+                        width: popupList.width
+                        height: 32
+                        radius: 6
+                        color: optMA.containsMouse ? Theme.controlHover : (comboRoot.currentIndex === index ? Theme.activeBg : "transparent")
 
-                        Repeater {
-                            model: comboRoot.model
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.left: parent.left
+                            anchors.leftMargin: 10
+                            anchors.right: parent.right
+                            anchors.rightMargin: 10
+                            text: String(modelData || "")
+                            elide: Text.ElideRight
+                            color: comboRoot.currentIndex === index ? Theme.accentCol : Theme.textPrimary
+                            font.pixelSize: 12
+                            font.weight: comboRoot.currentIndex === index ? Font.Medium : Font.Normal
+                        }
 
-                            delegate: Rectangle {
-                                width: popupCol.width
-                                height: 32
-                                radius: 6
-                                color: optMA.containsMouse ? Theme.controlHover : (comboRoot.currentIndex === index ? Theme.activeBg : "transparent")
+                        MouseArea {
+                            id: optMA
 
-                                Text {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: 10
-                                    text: modelData
-                                    color: comboRoot.currentIndex === index ? Theme.accentCol : Theme.textPrimary
-                                    font.pixelSize: 12
-                                    font.weight: comboRoot.currentIndex === index ? Font.Medium : Font.Normal
-                                }
-
-                                MouseArea {
-                                    id: optMA
-
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        comboRoot.currentIndex = index;
-                                        comboRoot.activated(index);
-                                        comboRoot.closePopup();
-                                    }
-                                }
-
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                comboRoot.currentIndex = index;
+                                comboRoot.activated(index);
+                                comboRoot.closePopup();
                             }
-
                         }
 
                     }
 
                     QQC2.ScrollBar.vertical: QQC2.ScrollBar {
-                        policy: popupFlick.contentHeight > popupFlick.height ? QQC2.ScrollBar.AsNeeded : QQC2.ScrollBar.AlwaysOff
+                        policy: popupList.contentHeight > popupList.height ? QQC2.ScrollBar.AsNeeded : QQC2.ScrollBar.AlwaysOff
                     }
 
                 }
