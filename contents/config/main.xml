@@ -47,6 +47,30 @@
             <label>Font Family</label>
             <default></default>
         </entry>
+        <entry name="fontWeight" type="Int">
+            <label>Font Weight (e.g. 400=Normal, 700=Bold)</label>
+            <default>700</default>
+        </entry>
+        <entry name="fontItalic" type="Bool">
+            <label>Font Italic</label>
+            <default>false</default>
+        </entry>
+        <entry name="iconColorSource" type="Int">
+            <label>Icon Color Source (0=Follow Text, 1=System, 2=Custom)</label>
+            <default>0</default>
+        </entry>
+        <entry name="customIconColor" type="Color">
+            <label>Custom Icon Color</label>
+            <default>#ffffff</default>
+        </entry>
+        <entry name="applyConditionsToText" type="Bool">
+            <label>Apply Dynamic Conditions to Text Color</label>
+            <default>true</default>
+        </entry>
+        <entry name="applyConditionsToIcon" type="Bool">
+            <label>Apply Dynamic Conditions to Icon Color</label>
+            <default>true</default>
+        </entry>
         <entry name="showIcons" type="Bool">
             <label>Show Icons</label>
             <default>true</default>

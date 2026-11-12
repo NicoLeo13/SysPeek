@@ -9,12 +9,17 @@ import org.kde.plasma.core as PlasmaCore
 RowLayout {
     id: itemRoot
 
-    property alias icon: iconImage.source
+    property alias icon: iconItem.source
     property alias label: labelText.text
     property color color: Kirigami.Theme.textColor
+    property color iconColor: itemRoot.color
+    property bool useSystemTextColor: false
+    property bool useSystemIconColor: false
     property int iconTextSpacing: Kirigami.Units.smallSpacing
     property int fontSize: 10
     property string fontFamily: ""
+    property int fontWeight: Font.Bold
+    property bool fontItalic: false
     property bool showIcon: true
     property string tooltipText: ""
     property bool showTooltips: true
@@ -28,6 +33,8 @@ RowLayout {
     readonly property int reservedLabelWidth: Math.max(Math.ceil(labelMetrics.advanceWidth), widestSeenLabelWidth) + Math.max(0, fixedLabelWidthExtra)
     onFontSizeChanged: widestSeenLabelWidth = 0
     onFontFamilyChanged: widestSeenLabelWidth = 0
+    onFontWeightChanged: widestSeenLabelWidth = 0
+    onFontItalicChanged: widestSeenLabelWidth = 0
     onLabelWidthHintChanged: widestSeenLabelWidth = 0
     readonly property int labelHAlign: {
         if (!fixedLabelWidth)
@@ -154,43 +161,50 @@ RowLayout {
 
     }
 
-    Item {
+    Kirigami.Icon {
+        id: iconItem
+
+        readonly property color desiredColor: itemRoot.useSystemIconColor ? iconItem.Kirigami.Theme.textColor : itemRoot.iconColor
+
         Layout.preferredWidth: Math.round(Kirigami.Units.iconSizes.small * (itemRoot.fontSize / 10))
         Layout.preferredHeight: Layout.preferredWidth
         Layout.alignment: Qt.AlignVCenter
-        visible: itemRoot.showIcon
-
-        Image {
-            id: iconImage
-
-            anchors.fill: parent
-            sourceSize.width: width
-            sourceSize.height: height
-            fillMode: Image.PreserveAspectFit
-            visible: false
+        visible: itemRoot.showIcon && iconItem.source !== ""
+        isMask: true
+        color: desiredColor
+        onDesiredColorChanged: {
+            if (!Qt.colorEqual(color, desiredColor))
+                color = Qt.binding(() => iconItem.desiredColor);
         }
-
-        MultiEffect {
-            source: iconImage
-            anchors.fill: iconImage
-            colorization: 1
-            colorizationColor: itemRoot.color
+        onColorChanged: {
+            if (!itemRoot.useSystemIconColor && !Qt.colorEqual(color, desiredColor))
+                color = Qt.binding(() => iconItem.desiredColor);
         }
-
     }
 
     Text {
         id: labelText
+
+        readonly property color desiredColor: itemRoot.useSystemTextColor ? labelText.Kirigami.Theme.textColor : itemRoot.color
 
         Layout.alignment: Qt.AlignVCenter
         Layout.preferredWidth: itemRoot.fixedLabelWidth ? Math.max(itemRoot.reservedLabelWidth, Math.ceil(implicitWidth)) : Math.ceil(implicitWidth)
         Layout.minimumWidth: Layout.preferredWidth
         horizontalAlignment: itemRoot.labelHAlign
         verticalAlignment: Text.AlignVCenter
-        color: itemRoot.color
+        color: desiredColor
+        onDesiredColorChanged: {
+            if (!Qt.colorEqual(color, desiredColor))
+                color = Qt.binding(() => labelText.desiredColor);
+        }
+        onColorChanged: {
+            if (!itemRoot.useSystemTextColor && !Qt.colorEqual(color, desiredColor))
+                color = Qt.binding(() => labelText.desiredColor);
+        }
         font.pointSize: itemRoot.fontSize
         font.family: itemRoot.fontFamily !== "" ? itemRoot.fontFamily : Kirigami.Theme.defaultFont.family
-        font.bold: true
+        font.weight: itemRoot.fontWeight
+        font.italic: itemRoot.fontItalic
         onImplicitWidthChanged: {
             if (itemRoot.fixedLabelWidth && implicitWidth > itemRoot.widestSeenLabelWidth)
                 itemRoot.widestSeenLabelWidth = Math.ceil(implicitWidth);
